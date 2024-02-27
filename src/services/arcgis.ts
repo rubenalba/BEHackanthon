@@ -1,7 +1,8 @@
-import { logger } from '@config/logger';
-import ApplicationError from '@server/models/application_error';
-import { Postgresql } from '@server/persistance/postgresql'; 
-import { findOne, } from '@server/utils/query_builder';
+// import { logger } from '@config/logger';
+// import ApplicationError from '@server/models/application_error';
+// import { Postgresql } from '@server/persistance/postgresql'; 
+// import { findOne, } from '@server/utils/query_builder';
+import axios from 'axios';
 
 /**
  * Class in charge of implementing the business logic related to the integration with ArcGIS.
@@ -12,19 +13,50 @@ export class ArcGISService {
    * Checks if a Geoservei URL is already used in a map. If it is, 409 exception is thrown. If not, nothing happens.
    * @param url URL that must be checked if it is already used.
    */
-  public static checkGeoserveiUsage = async (url: string): Promise<void> => {
-    let query = findOne(`${process.env.PDB_DBNAME}.${process.env.PDB_COLLECTION}."Mapa"`, ["*"], `"arcgis_mapName"`, `'${url}'`)
-    
-    logger.info("    Executing query: findOne in Mapa")
-    logger.debug("    " + query)
-    let client = await Postgresql.getInstance();
-    let res = await client.query(query);
-  
-    logger.info("    Query executed")
-    logger.debug("    # Rows Returned: " + res.rows.length);
+  public static checkGeoserveiUsage = async (): Promise<void> => {
 
-    if (res.rowCount > 0) {
-      throw new ApplicationError(409, 66546, `Given ArcGIS Geoservei URL already in use in map with id ${res.rows[0].id}: ${url}`, `El Geoservei donat ja està en ús: ${url}`)
+const options = {
+  method: 'POST',
+  url: 'https://network-slicing.p-eu.rapidapi.com/slices',
+  headers: {
+    'content-type': 'application/json',
+    'X-RapidAPI-Key': 'd85dc86e30mshded947511789024p1d60e4jsnf68237d8b065',
+    'X-RapidAPI-Host': 'network-slicing.nokia.rapidapi.com'
+  },
+  data: {
+    "name": "testtesttest2024",
+    "notificationUrl": "https://www.example.com",
+    "networkIdentifier": {
+        "mcc": "236",
+        "mnc": "30"
+    },
+    "sliceInfo": {
+        "service_type": "eMBB",
+        "differentiator": "123456"
+    },"sliceDownlinkThroughput": {
+        "guaranteed": 0,
+        "maximum": 0
+    },
+    "sliceUplinkThroughput": {
+        "guaranteed": 0,
+        "maximum": 0
+    },
+    "deviceDownlinkThroughput": {
+        "guaranteed": 0,
+        "maximum": 0
+    },
+    "deviceUplinkThroughput": {
+        "guaranteed": 0,
+        "maximum": 0
     }
+}
+};
+
+try {
+	const response = await axios.request(options);
+	console.log(response.data);
+} catch (error) {
+	console.error(error);
+}
   }
 }

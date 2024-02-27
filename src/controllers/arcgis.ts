@@ -1,5 +1,5 @@
 import { /*QueryParam,*/ Get, Controller } from "routing-controllers";
-import { ArcGISService } from "@server/services/arcgis";
+import { EmergencyService } from "@server/services/EmergencyService";
 
 /**
  * Handles all the incoming requests related to the integration with ArcGIS.
@@ -14,7 +14,7 @@ export class ArcGISController {
    */
     @Get('/start')
     async checkGeoserviceUsage() {
-        await ArcGISService.checkGeoserveiUsage();
+        await EmergencyService.createSlideNetwork();
         return "200 OK";
     }
 }

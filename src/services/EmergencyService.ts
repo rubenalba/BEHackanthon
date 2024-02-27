@@ -2,15 +2,15 @@
 import axios from 'axios';
 
 /**
- * Class in charge of implementing the business logic related to the integration with the emergency.
+ * Class in charge of implementing the business logic related to the emergency.
  */
 export class EmergencyService {
 
   /**
-   * Creates a slide in the network;
+   * Creates a slice in the network;
    */
-  public static createSlideNetwork = async (): Promise<void> => {
-
+  public static createEmergency = async (): Promise<void> => {
+    // Create Slice
     const options = {
       method: 'POST',
       url: 'https://network-slicing.p-eu.rapidapi.com/slices',
@@ -48,6 +48,29 @@ export class EmergencyService {
       }
     };
 
+    try {
+      const response = await axios.request(options);
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+
+    // get device pool
+
+    // attach devices in the pool to the slice
+
+  }
+
+  public static stopEmergency = async (sliceId: string): Promise<void> => {
+    const options = {
+      method: 'DELETE',
+      url: `https://network-slicing.p-eu.rapidapi.com/slices/${sliceId}`,
+      headers: {
+        'X-RapidAPI-Key': 'd85dc86e30mshded947511789024p1d60e4jsnf68237d8b065',
+        'X-RapidAPI-Host': 'network-slicing.nokia.rapidapi.com'
+      }
+    };
+    
     try {
       const response = await axios.request(options);
       console.log(response.data);

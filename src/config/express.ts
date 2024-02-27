@@ -14,7 +14,8 @@ const createServer = (): express.Application => {
       origin: '*'
     },
     controllers: [
-      routes.ArcGISController,
+      routes.EmergencyController,
+      routes.DevicePoolController,
     ],
     classTransformer: true
   });

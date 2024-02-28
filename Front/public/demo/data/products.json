@@ -1,0 +1,9 @@
+
+{
+    "data": [
+        {"id": "1000","code": "f230fh0g3","name": "POOL-A","description": "Product Description","image": "bamboo-watch.jpg","price": 65,"category": "Accessories","quantity": 24,"inventoryStatus": "Device-001, Device-002, Device-003","rating": 5},
+        {"id": "1002","code": "zz21cz3c1","name": "POOL-B","description": "Product Description","image": "blue-band.jpg","price": 79,"category": "Fitness","quantity": 2,"inventoryStatus": "Device-0010, Device-0022, Device-0012","rating": 3},
+        {"id": "1003","code": "244wgerg2","name": "POOL-C","description": "Product Description","image": "blue-t-shirt.jpg","price": 29,"category": "Clothing","quantity": 25,"inventoryStatus": "Device-0015, Device-0025, Device-0029","rating": 5}
+    ]
+}
+    

@@ -14,6 +14,5 @@ async function startServer() {
   
   return server;
 }
-
 startServer();
 

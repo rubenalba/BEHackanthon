@@ -5,9 +5,9 @@ import * as path from 'path';
 
   // Define the return type of the emergency object
   interface Emergency {
-    sliceId: string; // Assuming sliceId is a string, adjust the type as necessary
+    sliceId: string; 
     devicePoolName: string;
-    devices: string[]; // Replace any[] with a more specific type if possible
+    devices: string[]; 
     createdAt: string;
   }
   
@@ -19,7 +19,7 @@ export class EmergencyService {
   /**
    * Creates a slice in the network;
    */
-  public static createEmergency = async (devicePoolName: string): Promise<Emergency> => {
+  public static createEmergency = async (devicePoolName: string): Promise<Emergency | void> => {
     // Create Slice
     const options = {
       method: 'POST',
@@ -63,6 +63,7 @@ export class EmergencyService {
 
       // get the slice ID
       const sliceId = response.data.name;
+      console.log(sliceId);
 
       // pool the slice state, while it is "PENDING" keep pooling, when it is "AVAILABLE" activate the slice and attach the devices
       let sliceState = response.data.state;
@@ -78,12 +79,13 @@ export class EmergencyService {
         await new Promise(resolve => setTimeout(resolve, 1000));
         const sliceStateResponse = await axios.request(sliceoptions);
         sliceState = sliceStateResponse.data.state;
+        console.log(`checking slice ${sliceId}: ${sliceState}`);
       }
 
       // activate the slice
       const activateSliceOptions = {
         method: 'POST',
-        url: 'https://network-slicing.p-eu.rapidapi.com/slices/%7Bid%7D/activate',
+        url: `https://network-slicing.p-eu.rapidapi.com/slices/${sliceId}/activate`,
         headers: {
           'X-RapidAPI-Key': 'd85dc86e30mshded947511789024p1d60e4jsnf68237d8b065',
           'X-RapidAPI-Host': 'network-slicing.nokia.rapidapi.com'
@@ -97,10 +99,13 @@ export class EmergencyService {
         console.error(error);
       }
 
+
       // get the device pool ID from the pool id file 
       const devicePoolFromFile = fs.readFileSync("src/persistance/devicePools.json", 'utf8');
       const devicePool = JSON.parse(devicePoolFromFile);
       const devices = devicePool[devicePoolName];
+
+      console.log(`${devicePool}`)
 
 
 
@@ -142,7 +147,7 @@ export class EmergencyService {
 
       // add the emergency, the slice and the pool name and the time it was created to the emergencies file 
       const filePath = path.join("src/persistance", 'emergencies.json');
-      const emergency = {
+      const emergency: Emergency = {
         sliceId,
         devicePoolName,
         devices,
@@ -150,9 +155,12 @@ export class EmergencyService {
       }
       console.log(emergency);
       const emergenciesFromFile = fs.readFileSync(filePath, 'utf8');
-      const emergencies = JSON.parse(emergenciesFromFile);
-      emergencies.push(emergency);
-      console.log(response.data);
+      let emergencies = JSON.parse(emergenciesFromFile);
+      const emergencyId = `${devicePoolName}_emergency`; // Corrected variable name
+      emergencies[emergencyId] = emergency;
+
+      // write the emergencies to file
+      fs.writeFileSync(filePath, JSON.stringify(emergencies));
       return emergency;
     } catch (error) {
       console.error(error);

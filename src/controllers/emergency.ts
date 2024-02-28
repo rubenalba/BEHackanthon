@@ -1,6 +1,11 @@
 import { /*QueryParam,*/Post, JsonController, Param, Body } from "routing-controllers";
 import { EmergencyService } from "@server/services/EmergencyService";
 
+// Define interfaces for the structured request bodies
+interface CreateEmergencyRequest {
+  name: string; // Name of the device pool
+}
+
 /**
  * Handles all the incoming requests related to the integration with ArcGIS.
  */
@@ -13,8 +18,8 @@ export class EmergencyController {
    * @returns 200 if geoservei is not used. 409 Exception is geoservei is already used.
    */
  @Post('/start')
- async checkGeoserviceUsage(@Body('name') devicePoolName: string) {
-   await EmergencyService.createEmergency(devicePoolName);
+ async startEmergency(@Body() { name }: CreateEmergencyRequest) {
+   await EmergencyService.createEmergency(name);
    return "200 OK";
  }
   /**

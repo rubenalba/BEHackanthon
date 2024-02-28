@@ -3,14 +3,14 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 
-  // Define the return type of the emergency object
-  interface Emergency {
-    sliceId: string; 
-    devicePoolName: string;
-    devices: string[]; 
-    createdAt: string;
-  }
-  
+// Define the return type of the emergency object
+interface Emergency {
+  sliceId: string;
+  devicePoolName: string;
+  devices: string[];
+  createdAt: string;
+}
+
 /**
  * Class in charge of implementing the business logic related to the emergency.
  */
@@ -82,6 +82,8 @@ export class EmergencyService {
         console.log(`checking slice ${sliceId}: ${sliceState}`);
       }
 
+
+      let sliceOperatingState; 
       // activate the slice
       const activateSliceOptions = {
         method: 'POST',
@@ -93,10 +95,29 @@ export class EmergencyService {
       };
 
       try {
+        console.log("activating slice")
         const response = await axios.request(activateSliceOptions);
+        sliceOperatingState = response.data.state;
         console.log(response.data);
       } catch (error) {
         console.error(error);
+      }
+
+
+      console.log("check if slice is operating")
+      while (sliceOperatingState !== "OPERATING") {
+        const sliceoptions = {
+          method: 'GET',
+          url: `https://network-slicing.p-eu.rapidapi.com/slices/${sliceId}`,
+          headers: {
+            'X-RapidAPI-Key': 'd85dc86e30mshded947511789024p1d60e4jsnf68237d8b065',
+            'X-RapidAPI-Host': 'network-slicing.nokia.rapidapi.com'
+          }
+        };
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const sliceStateResponse = await axios.request(sliceoptions);
+        sliceOperatingState = sliceStateResponse.data.state;
+        console.log(`checking slice ${sliceId}: ${sliceOperatingState}`);
       }
 
 
@@ -165,7 +186,7 @@ export class EmergencyService {
     } catch (error) {
       console.error(error);
     }
-    
+
 
   }
 

@@ -1,10 +1,10 @@
-import { /*QueryParam,*/Post, Controller, Param } from "routing-controllers";
+import { /*QueryParam,*/Post, JsonController, Param, Body } from "routing-controllers";
 import { EmergencyService } from "@server/services/EmergencyService";
 
 /**
  * Handles all the incoming requests related to the integration with ArcGIS.
  */
-@Controller('/emergencies')
+@JsonController('/emergencies')
 export class EmergencyController {
 
  /**
@@ -12,11 +12,11 @@ export class EmergencyController {
    * @param url ArcGIS Geoservei URL that is about to be used for a map
    * @returns 200 if geoservei is not used. 409 Exception is geoservei is already used.
    */
-    @Post('/start')
-    async checkGeoserviceUsage() {
-        await EmergencyService.createEmergency();
-        return "200 OK";
-    }
+ @Post('/start')
+ async checkGeoserviceUsage(@Body('name') devicePoolName: string) {
+   await EmergencyService.createEmergency(devicePoolName);
+   return "200 OK";
+ }
   /**
    * Handles the incoming requests that expect a category, specified by its id and its tipology name.
    * @param lang Language in which the query should be done.

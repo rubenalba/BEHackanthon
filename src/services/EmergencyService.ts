@@ -1,6 +1,16 @@
 
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 
+  // Define the return type of the emergency object
+  interface Emergency {
+    sliceId: string; // Assuming sliceId is a string, adjust the type as necessary
+    devicePoolName: string;
+    devices: string[]; // Replace any[] with a more specific type if possible
+    createdAt: string;
+  }
+  
 /**
  * Class in charge of implementing the business logic related to the emergency.
  */
@@ -9,7 +19,7 @@ export class EmergencyService {
   /**
    * Creates a slice in the network;
    */
-  public static createEmergency = async (): Promise<void> => {
+  public static createEmergency = async (devicePoolName: string): Promise<Emergency> => {
     // Create Slice
     const options = {
       method: 'POST',
@@ -50,14 +60,104 @@ export class EmergencyService {
 
     try {
       const response = await axios.request(options);
+
+      // get the slice ID
+      const sliceId = response.data.name;
+
+      // pool the slice state, while it is "PENDING" keep pooling, when it is "AVAILABLE" activate the slice and attach the devices
+      let sliceState = response.data.state;
+      while (sliceState !== "AVAILABLE") {
+        const sliceoptions = {
+          method: 'GET',
+          url: `https://network-slicing.p-eu.rapidapi.com/slices/${sliceId}`,
+          headers: {
+            'X-RapidAPI-Key': 'd85dc86e30mshded947511789024p1d60e4jsnf68237d8b065',
+            'X-RapidAPI-Host': 'network-slicing.nokia.rapidapi.com'
+          }
+        };
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const sliceStateResponse = await axios.request(sliceoptions);
+        sliceState = sliceStateResponse.data.state;
+      }
+
+      // activate the slice
+      const activateSliceOptions = {
+        method: 'POST',
+        url: 'https://network-slicing.p-eu.rapidapi.com/slices/%7Bid%7D/activate',
+        headers: {
+          'X-RapidAPI-Key': 'd85dc86e30mshded947511789024p1d60e4jsnf68237d8b065',
+          'X-RapidAPI-Host': 'network-slicing.nokia.rapidapi.com'
+        }
+      };
+
+      try {
+        const response = await axios.request(activateSliceOptions);
+        console.log(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+
+      // get the device pool ID from the pool id file 
+      const devicePoolFromFile = fs.readFileSync("src/persistance/devicePools.json", 'utf8');
+      const devicePool = JSON.parse(devicePoolFromFile);
+      const devices = devicePool[devicePoolName];
+
+
+
+      try {
+
+        // map over the devices to attach them to the slice
+        devices.map(async (device: string) => {
+
+          // attach the devices
+          const deviceAttachOptions = {
+            method: 'POST',
+            url: 'https://network-slice-device-attachment.p-eu.rapidapi.com/device/slice',
+            headers: {
+              'content-type': 'application/json',
+              'X-RapidAPI-Key': 'd85dc86e30mshded947511789024p1d60e4jsnf68237d8b065',
+              'X-RapidAPI-Host': 'network-slice-device-attachment.nokia.rapidapi.com'
+            },
+            data: {
+              "device": {
+                "networkAccessIdentifier": device
+
+              },
+              "sliceID": sliceId,
+              "osId": "ANDROID",
+              "appId": "ENTERPRISE"
+            }
+          };
+          const response = await axios.request(deviceAttachOptions);
+
+          // check the status of the device if it is attached from the response
+          if (response.data.status === "ATTACHED") {
+            console.log(`Device ${device} attached`);
+          }
+        })
+
+      } catch (error) {
+        console.error(error);
+      }
+
+      // add the emergency, the slice and the pool name and the time it was created to the emergencies file 
+      const filePath = path.join("src/persistance", 'emergencies.json');
+      const emergency = {
+        sliceId,
+        devicePoolName,
+        devices,
+        createdAt: new Date().toISOString()
+      }
+      console.log(emergency);
+      const emergenciesFromFile = fs.readFileSync(filePath, 'utf8');
+      const emergencies = JSON.parse(emergenciesFromFile);
+      emergencies.push(emergency);
       console.log(response.data);
+      return emergency;
     } catch (error) {
       console.error(error);
     }
-
-    // get device pool
-
-    // attach devices in the pool to the slice
+    
 
   }
 
@@ -70,7 +170,7 @@ export class EmergencyService {
         'X-RapidAPI-Host': 'network-slicing.nokia.rapidapi.com'
       }
     };
-    
+
     try {
       const response = await axios.request(options);
       console.log(response.data);
